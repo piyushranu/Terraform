@@ -1,45 +1,57 @@
 trigger:
-  - main
+- main
 
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  terraformVersion: '1.6.0'
+  ARM_SUBSCRIPTION_ID: '<your-subscription-id>'
+  ARM_TENANT_ID: '<your-tenant-id>'
 
 steps:
-- task: TerraformInstaller@1
-  displayName: Install Terraform
-  inputs:
-    terraformVersion: $(terraformVersion)
 
-- task: TerraformTaskV4@4
-  displayName: Terraform Init
-  inputs:
-    provider: 'azurerm'
-    command: 'init'
-    backendServiceArm: 'Azure-Terraform-Connection'
-    backendAzureRmResourceGroupName: 'tfstate-rg'
-    backendAzureRmStorageAccountName: 'tfstateaccount'
-    backendAzureRmContainerName: 'tfstate'
-    backendAzureRmKey: 'nic.tfstate'
+# ✅ Checkout GitHub Repo
+- checkout: self
 
-- task: TerraformTaskV4@4
-  displayName: Terraform Validate
+# ✅ Install Terraform (NO TerraformInstaller task)
+- task: Bash@3
+  displayName: "Install Terraform"
   inputs:
-    provider: 'azurerm'
-    command: 'validate'
+    targetType: 'inline'
+    script: |
+      sudo apt-get update
+      sudo apt-get install -y unzip
+      wget https://releases.hashicorp.com/terraform/1.8.5/terraform_1.8.5_linux_amd64.zip
+      unzip terraform_1.8.5_linux_amd64.zip
+      sudo mv terraform /usr/local/bin/
+      terraform -version
 
-- task: TerraformTaskV4@4
-  displayName: Terraform Plan
+# ✅ Azure Login (Service Connection)
+- task: AzureCLI@2
+  displayName: "Terraform Init"
   inputs:
-    provider: 'azurerm'
-    command: 'plan'
-    environmentServiceNameAzureRM: 'Azure-Terraform-Connection'
+    azureSubscription: "<YOUR-SERVICE-CONNECTION-NAME>"
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+      terraform init
 
-- task: TerraformTaskV4@4
-  displayName: Terraform Apply
+# ✅ Terraform Plan
+- task: AzureCLI@2
+  displayName: "Terraform Plan"
   inputs:
-    provider: 'azurerm'
-    command: 'apply'
-    environmentServiceNameAzureRM: 'Azure-Terraform-Connection'
+    azureSubscription: "terraform_spn_internal"
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+      terraform plan
+
+# ✅ Terraform Apply (Auto-approve)
+- task: AzureCLI@2
+  displayName: "Terraform Apply"
+  inputs:
+    azureSubscription: "<YOUR-SERVICE-CONNECTION-NAME>"
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+      terraform apply -auto-approve
