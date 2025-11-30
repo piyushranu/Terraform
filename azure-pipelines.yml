@@ -5,8 +5,8 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  ARM_SUBSCRIPTION_ID: '<your-subscription-id>'
-  ARM_TENANT_ID: '<your-tenant-id>'
+  ARM_SUBSCRIPTION_ID: 'f81d425e-8d88-4693-bf4e-d6ee9cc8d234'
+  ARM_TENANT_ID: '3f0ee158-19fe-4d65-a591-89ce5602a694'
 
 steps:
 
@@ -30,7 +30,7 @@ steps:
 - task: AzureCLI@2
   displayName: "Terraform Init"
   inputs:
-    azureSubscription: "<YOUR-SERVICE-CONNECTION-NAME>"
+    azureSubscription: "terraform_spn_internal"
     scriptType: bash
     scriptLocation: inlineScript
     inlineScript: |
@@ -50,7 +50,7 @@ steps:
 - task: AzureCLI@2
   displayName: "Terraform Apply"
   inputs:
-    azureSubscription: "<YOUR-SERVICE-CONNECTION-NAME>"
+    azureSubscription: "terraform_spn_internal"
     scriptType: bash
     scriptLocation: inlineScript
     inlineScript: |
